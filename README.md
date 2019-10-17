@@ -1,7 +1,7 @@
 # esp-docker-micropython
 building micropython/pycopy for esp8266/esp32 in Docker
 
-based on knowledge of pfalcon
+based on knowledge of https://github.com/pfalcon/
 
 ## Usage
 docker build -t pycopy_8266 -f ./Dockerfile_pycopy_8266
