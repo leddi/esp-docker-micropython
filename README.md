@@ -9,7 +9,7 @@ https://github.com/fcollova/micropython-docker-build
 
 
 ## Usage
-### docker build -t pycopy_8266 -f ./Dockerfile_pycopy_8266
+docker build -t pycopy_8266 -f ./Dockerfile_pycopy_8266
 
 docker create pycopy_8266 --name pycopy_container
 
