@@ -1,0 +1,96 @@
+FROM ubuntu:bionic
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update -qq \
+  && apt-get install -qqy \
+    autoconf \
+    automake \
+    bash \
+    bison \
+    build-essential \
+    bzip2 \
+    flex \
+    g++ \
+    gawk \
+    gcc \
+    git \
+    gperf \
+    help2man \
+    libexpat-dev \
+    libffi-dev \
+    libtool \
+    libtool-bin \
+    make \
+    ncurses-dev \
+    pkg-config \
+    python \
+    python-dev \
+    python-serial \
+    python3 \
+    python3-pip \
+    sed \
+    texinfo \
+    unrar-free \
+    unzip \
+    wget \ 
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install pyparsing
+
+RUN useradd --no-create-home micropython
+
+RUN mkdir /esp
+RUN chown -R micropython:micropython esp
+USER micropython
+WORKDIR /esp
+
+# Download crosstool-NG and build it:
+RUN git clone -b xtensa-1.22.x https://github.com/espressif/crosstool-NG.git
+RUN cd crosstool-NG && ./bootstrap && ./configure --enable-local && make install
+
+# Build the toolchain:
+RUN cd crosstool-NG && ./ct-ng xtensa-esp32-elf
+RUN cd crosstool-NG && ./ct-ng build
+RUN cd crosstool-NG && chmod -R u+w builds/xtensa-esp32-elf
+
+ARG BRANCH=pfalcon
+
+# Find correct version of esp-idf, depends on selected branch
+ADD --chown=micropython:micropython https://raw.githubusercontent.com/pfalcon/pycopy/$BRANCH/ports/esp32/Makefile /tmp/ESP32-Makefile
+
+RUN git clone https://github.com/espressif/esp-idf.git
+RUN cd esp-idf && cat /tmp/ESP32-Makefile | grep "^ESPIDF_SUPHASH" | awk '{print $NF}' | xargs git checkout
+RUN cd esp-idf && git submodule update --init --recursive
+
+ENV PATH="${PATH}:/esp/crosstool-NG/builds/xtensa-esp32-elf/bin"
+ENV ESPIDF="/esp/esp-idf"
+
+# Cache buster for git clone #https://stackoverflow.com/questions/36996046/how-to-prevent-dockerfile-caching-git-clone
+#ADD https://api.github.com/repos/pfalcon/micropython/git/refs/heads/$BRANCH version.json
+#RUN git clone --recursive https://github.com/pfalcon/micropython.git
+
+ADD https://api.github.com/repos/pfalcon/pycopy/git/refs/heads/$BRANCH version.json
+RUN git clone --recursive https://github.com/pfalcon/pycopy.git \
+  && cd pycopy && git checkout $BRANCH && git submodule update --init
+
+RUN make --directory /esp/pycopy -C mpy-cross
+
+RUN make --directory /esp/pycopy/ports/unix
+
+# add modules to be frozen in the built firmware, customze as required
+RUN cd /esp/pycopy/ports/unix && ./pycopy -m upip install -p ../esp32/modules \
+  micropython-uasyncio \
+  micropython-uaiohttpclient \
+  micropython-urequests \
+  micropython-ulogging \
+  picoweb
+
+# add drivers to be frozen in the built firmware, customze as required
+RUN ln /esp/pycopy/drivers/display/ssd1306.py /esp/pycopy/ports/esp32/modules/ssd1306.py
+
+# Finally build the firmware
+RUN make --directory /esp/pycopy/ports/esp32
+
+# Extract with docker cp micropython:/esp/pycopy/ports/esp32/build/firmware.bin firmware.bin                   
