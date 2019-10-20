@@ -19,6 +19,10 @@ RUN chown -R micropython:micropython ../esp-open-sdk ../pycopy
 
 USER micropython
 
+#module
+RUN cp ../pycopy/drivers/display/ssd1306.py ../pycopy/ports/esp8266/modules/
+
+
 RUN cd esp-open-sdk && make STANDALONE=y
 
 ENV PATH=/esp-open-sdk/xtensa-lx106-elf/bin:$PATH
