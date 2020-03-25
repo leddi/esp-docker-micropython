@@ -61,7 +61,9 @@ ARG BRANCH=pfalcon
 ADD --chown=micropython:micropython https://raw.githubusercontent.com/pfalcon/pycopy/$BRANCH/ports/esp32/Makefile /tmp/ESP32-Makefile
 
 RUN git clone https://github.com/espressif/esp-idf.git
-RUN cd esp-idf && cat /tmp/ESP32-Makefile | grep "^ESPIDF_SUPHASH" | awk '{print $NF}' | xargs git checkout
+# RUN cd esp-idf && cat /tmp/ESP32-Makefile | grep "^ESPIDF_SUPHASH" | awk '{print $NF}' | xargs git checkout
+RUN cd esp-idf && git checkout 143d26aa49df524e10fb8e41a71d12e731b9b71d
+# fix V4 idf error
 RUN cd esp-idf && git submodule update --init --recursive
 
 ENV PATH="${PATH}:/esp/crosstool-NG/builds/xtensa-esp32-elf/bin"
