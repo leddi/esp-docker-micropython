@@ -82,12 +82,12 @@ RUN make --directory /esp/pycopy -C mpy-cross
 RUN make --directory /esp/pycopy/ports/unix
 
 # add modules to be frozen in the built firmware, customze as required
-RUN cd /esp/pycopy/ports/unix && ./pycopy -m upip install -p ../esp32/modules \
-  micropython-urequests \
-  micropython-uasyncio \
-  micropython-uaiohttpclient \
-  micropython-ulogging \
-  picoweb
+RUN cd /esp/pycopy/ports/unix && \
+./pycopy -m upip install -p ../esp32/modules micropython-urequests && \
+./pycopy -m upip install -p ../esp32/modules micropython-uasyncio && \
+./pycopy -m upip install -p ../esp32/modules micropython-uaiohttpclient && \
+./pycopy -m upip install -p ../esp32/modules micropython-ulogging && \
+./pycopy -m upip install -p ../esp32/modules picoweb
 
 # add drivers to be frozen in the built firmware, customze as required
 RUN ln /esp/pycopy/drivers/display/ssd1306.py /esp/pycopy/ports/esp32/modules/ssd1306.py
