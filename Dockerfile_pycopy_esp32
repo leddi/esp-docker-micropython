@@ -83,9 +83,9 @@ RUN make --directory /esp/pycopy/ports/unix
 
 # add modules to be frozen in the built firmware, customze as required
 RUN cd /esp/pycopy/ports/unix && ./pycopy -m upip install -p ../esp32/modules \
+  micropython-urequests \
   micropython-uasyncio \
   micropython-uaiohttpclient \
-  micropython-urequests \
   micropython-ulogging \
   picoweb
 
